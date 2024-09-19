@@ -6,7 +6,6 @@ import xarray as xr
 from ca_knell.mortality.projection import (
     mortality_impact_model,
     uclip,
-    _beta_from_gamma,
     mortality_impact_model_gamma,
     mortality_valuation_model,
 )

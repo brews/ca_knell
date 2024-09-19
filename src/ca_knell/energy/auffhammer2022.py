@@ -17,7 +17,7 @@ def _degf_to_degc(f):
 
 
 def _estimate_hourly_tas(
-        daily_ds, *, tasmax_name="tasmax", tasmin_name="tasmin", time_name="time"
+    daily_ds, *, tasmax_name="tasmax", tasmin_name="tasmin", time_name="time"
 ):
     """
     Estimate hourly "tas" DataArray from Dataset of daily tasmin, tasmax with sine wave
@@ -32,7 +32,7 @@ def _estimate_hourly_tas(
     amplitude = (hourly[tasmax_name] - hourly[tasmin_name]) / 2
     period = (hourly[time_name].dt.hour / 24) * 2 * np.pi
     vertical_shift = (
-            hourly[tasmin_name] + (hourly[tasmax_name] - hourly[tasmin_name]) / 2
+        hourly[tasmin_name] + (hourly[tasmax_name] - hourly[tasmin_name]) / 2
     )
     return amplitude * np.cos(period) + vertical_shift
 
@@ -84,7 +84,9 @@ def _auffhammer_hdd(tas_da, threshold):
     return out
 
 
-def auffhammer_dds(ds: xr.Dataset, tasmax_name: str="tasmax", tasmin_name: str="tasmin") -> xr.Dataset:
+def auffhammer_dds(
+    ds: xr.Dataset, tasmax_name: str = "tasmax", tasmin_name: str = "tasmin"
+) -> xr.Dataset:
     """
     Get Dataset of annual-sum Auffhammer (2022)-style HDD, CDD, CDD2, in degC.
 
@@ -126,20 +128,20 @@ def auffhammer_dds(ds: xr.Dataset, tasmax_name: str="tasmax", tasmin_name: str="
     # from an hourly estimate...
     with xr.set_options(keep_attrs=True):
         dds = (
-                xr.Dataset(
-                    {
-                        "cdd": _auffhammer_cdd(hr_estimate, b)
-                        .resample(time="1YE")
-                        .sum(skipna=False),
-                        "cdd2": _auffhammer_cdd(hr_estimate, b2)
-                        .resample(time="1YE")
-                        .sum(skipna=False),
-                        "hdd": _auffhammer_hdd(hr_estimate, b)
-                        .resample(time="1YE")
-                        .sum(skipna=False),
-                    }
-                )
-                / 24
+            xr.Dataset(
+                {
+                    "cdd": _auffhammer_cdd(hr_estimate, b)
+                    .resample(time="1YE")
+                    .sum(skipna=False),
+                    "cdd2": _auffhammer_cdd(hr_estimate, b2)
+                    .resample(time="1YE")
+                    .sum(skipna=False),
+                    "hdd": _auffhammer_hdd(hr_estimate, b)
+                    .resample(time="1YE")
+                    .sum(skipna=False),
+                }
+            )
+            / 24
         )
 
     return dds

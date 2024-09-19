@@ -14,7 +14,10 @@ def _labor_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     # Total damages are impacts in mins/worker/day * 365 days * worker population *  year wage income / (250 days * 60 mins * 6 hours * elasticity = 0.5 )
     # negative sign is applied since minutes lost is a positive damage
     damages_total = (
-        -ds["impact"] * 365 * ds["pop"] * ds["wages"]
+        -ds["impact"]
+        * 365
+        * ds["pop"]
+        * ds["wages"]
         / (ds["total_employed"] * 250 * 60 * 6 * 0.5)
     )
 

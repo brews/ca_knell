@@ -40,14 +40,14 @@ def read_csvv(filename):
         for variable in variables:
             vardef = variables[variable[0]]
             assert isinstance(vardef, dict), (
-                "Variable definition '%s' malformed." % str(vardef)
+                f"Variable definition {vardef} malformed."
             )
             if "unit" in vardef:
                 fullunit = vardef["unit"]
                 if "]" in fullunit:
                     vardef["unit"] = fullunit[: fullunit.index("]")]
             else:
-                print("WARNING: Missing unit for variable %s." % variable)
+                print(f"WARNING: Missing unit for variable {variable}.")
                 vardef["unit"] = None
 
         data = {"attrs": attrs, "variables": variables, "coords": coords}
