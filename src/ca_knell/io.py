@@ -39,9 +39,7 @@ def read_csvv(filename):
         # Clean up variables
         for variable in variables:
             vardef = variables[variable[0]]
-            assert isinstance(vardef, dict), (
-                f"Variable definition {vardef} malformed."
-            )
+            assert isinstance(vardef, dict), f"Variable definition {vardef} malformed."
             if "unit" in vardef:
                 fullunit = vardef["unit"]
                 if "]" in fullunit:
