@@ -1,7 +1,3 @@
-"""
-Testing for various odds and ends until this takes more structure.
-"""
-
 import xarray as xr
 
 from ca_knell.labor.projection import rcspline
