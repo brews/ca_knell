@@ -51,6 +51,9 @@ exclude = [
     "/.github",
 ]
 
+[tool.pytest.ini_options]
+addopts = ["--ignore=scripts"]
+
 [tool.ruff]
 exclude = ["scripts/*.py"]
 
