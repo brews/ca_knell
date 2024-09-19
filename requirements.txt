@@ -1,0 +1,11 @@
+# This is just used to semi-hard pin package versions for Github Actions and their dependency graph system.
+fsspec==2024.6.1
+metacsv==0.1.1
+muuttaa==0.1.0
+numpy==2.0.1
+pandas==2.2.2
+xhistogram==0.3.2
+xarray==2024.7.0
+pytest==8.3.2
+pytest-cov==5.0.0
+ruff==0.6.1
