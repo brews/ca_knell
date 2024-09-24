@@ -4,7 +4,7 @@ fsspec==2024.9.0
 metacsv==0.1.1
 muuttaa==0.1.0
 numpy==2.1.1
-pandas==2.2.2
+pandas==2.2.3
 xhistogram==0.3.2
 xarray==2024.9.0
 pytest==8.3.3
