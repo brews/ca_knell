@@ -1,6 +1,66 @@
+from muuttaa import project
+import numpy as np
+import pytest
 import xarray as xr
 
-from ca_knell.labor.projection import rcspline
+from ca_knell.labor.projection import rcspline, labor_impact_model
+
+
+@pytest.fixture
+def beta():
+    b = np.arange(4).reshape((2, 1, 2))
+    out = xr.Dataset(
+        {"beta": (["risk_sector", "region", "tasmax_bin"], b)},
+        coords={
+            "region": np.array(["foobar"]),
+            "tasmax_bin": np.array([20.5, 21.5]),
+            "risk_sector": np.array(["low", "high"]),
+        },
+    )
+    return out
+
+
+@pytest.fixture
+def histogram_tasmax():
+    x = np.arange(4).reshape((1, 2, 2))
+    x *= 10
+    out = xr.Dataset(
+        {"histogram_tasmax": (["region", "year", "tasmax_bin"], x)},
+        coords={
+            "region": np.array(["foobar"]),
+            "year": np.array([2020, 2050]),
+            "tasmax_bin": np.array([20.5, 21.5]),
+        },
+    )
+    return out
+
+
+def test_labor_impact_model(beta, histogram_tasmax):
+    """
+    Test that labor_impact_model runs through muuttaa.project with generally correct output.
+    """
+    expected = xr.Dataset(
+        {
+            "impact": (["region", "risk_sector"], np.array([[0.05479452, 0.2739726]])),
+            "_effect": (
+                ["region", "year", "risk_sector"],
+                np.array([[[0.02739726, 0.08219178], [0.08219178, 0.35616438]]]),
+            ),
+        },
+        coords={
+            "region": np.array(["foobar"]),
+            "year": np.array([2020, 2050]),
+            "risk_sector": np.array(["low", "high"]),
+        },
+    )
+
+    actual = project(
+        histogram_tasmax,  # Transformed input climate data.
+        model=labor_impact_model,
+        parameters=beta,
+    )
+
+    xr.testing.assert_allclose(actual, expected)
 
 
 def test_rcspline():
