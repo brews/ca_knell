@@ -131,13 +131,13 @@ def auffhammer_dds(
             xr.Dataset(
                 {
                     "cdd": _auffhammer_cdd(hr_estimate, b)
-                    .resample(time="1YE")
+                    .groupby("time.year")
                     .sum(skipna=False),
                     "cdd2": _auffhammer_cdd(hr_estimate, b2)
-                    .resample(time="1YE")
+                    .groupby("time.year")
                     .sum(skipna=False),
                     "hdd": _auffhammer_hdd(hr_estimate, b)
-                    .resample(time="1YE")
+                    .groupby("time.year")
                     .sum(skipna=False),
                 }
             )
