@@ -254,7 +254,7 @@ def test_uclip():
 
 def test_mortality_valuation_model():
     """
-    Test test_mortality_valuation_model can run through muuttaa.project.
+    Test mortality_valuation_model can run through muuttaa.project.
     Does basic check of output.
     """
     expected = xr.Dataset(
@@ -296,7 +296,7 @@ def test_mortality_valuation_model():
             "pci": (
                 ["region"],
                 [77_000.0],
-            ),  # Per Capita Income, rough approx of 2022 value I grabbed from Google.
+            ),
         },
         coords={
             "region": np.array(["foobar"]),

@@ -3,18 +3,45 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from ca_knell.labor.projection import rcspline, labor_impact_model
+from ca_knell.labor.projection import (
+    rcspline,
+    labor_impact_model,
+    labor_impact_model_gamma,
+)
 
 
 @pytest.fixture
 def beta():
-    b = np.arange(4).reshape((2, 1, 2))
+    b = np.arange(4).reshape(2, 1, 2)
     out = xr.Dataset(
         {"beta": (["risk_sector", "region", "tasmax_bin"], b)},
         coords={
             "region": np.array(["foobar"]),
             "tasmax_bin": np.array([20.5, 21.5]),
             "risk_sector": np.array(["low", "high"]),
+        },
+    )
+    return out
+
+
+@pytest.fixture
+def gamma():
+    g_m = np.arange(2 * 2, dtype="float64").reshape(2, 2)
+    g_m += 0.1
+    g_sampled = np.arange(2 * 2 * 2, dtype="float64").reshape(2, 2, 2)
+    g_sampled += 0.1
+    out = xr.Dataset(
+        {
+            "gamma_mean": (["risk_sector", "predname"], g_m),
+            "gamma_sampled": (
+                ["sample", "risk_sector", "predname"],
+                g_sampled,
+            ),
+        },
+        coords={
+            "predname": ["tasmax", "tasmax_rcspline1"],
+            "risk_sector": np.array(["low", "high"]),
+            "sample": [0, 1],
         },
     )
     return out
@@ -30,6 +57,25 @@ def histogram_tasmax():
             "region": np.array(["foobar"]),
             "year": np.array([2020, 2050]),
             "tasmax_bin": np.array([20.5, 21.5]),
+        },
+    )
+    return out
+
+
+@pytest.fixture
+def tasmax():
+    x = np.arange(2).reshape(
+        (
+            1,
+            2,
+        )
+    )
+    x *= 10
+    out = xr.Dataset(
+        {"tasmax": (["region", "year"], x)},
+        coords={
+            "region": np.array(["foobar"]),
+            "year": np.array([2020, 2050]),
         },
     )
     return out
@@ -58,6 +104,82 @@ def test_labor_impact_model(beta, histogram_tasmax):
         histogram_tasmax,  # Transformed input climate data.
         model=labor_impact_model,
         parameters=beta,
+    )
+
+    xr.testing.assert_allclose(actual, expected)
+
+
+def test_labor_impact_model_gamma_mean(gamma, histogram_tasmax, tasmax):
+    """
+    Test that labor_impact_model_gamma runs through muuttaa.project.
+     Checks for generally correct output using mean gamma as input.
+    """
+    # Build up what we expect output to be.
+    ex_i = np.array([[0.23013699, 4.83287671]])
+    ex_e = np.array([[[0.05890411, 1.2369863], [0.2890411, 6.06986301]]])
+    expected = xr.Dataset(
+        {
+            "impact": (["region", "risk_sector"], ex_i),
+            "_effect": (["region", "year", "risk_sector"], ex_e),
+        },
+        coords={
+            "region": np.array(["foobar"]),
+            "year": np.array([2020, 2050]),
+            "risk_sector": np.array(["low", "high"]),
+        },
+    )
+
+    # Combine data for input
+    transformed_input = xr.merge([histogram_tasmax, tasmax])
+    # Using rename_vars because model expects "gamma" variable, not "gamma_mean".
+    params = gamma[["gamma_mean"]].rename_vars({"gamma_mean": "gamma"})
+
+    actual = project(
+        transformed_input,
+        model=labor_impact_model_gamma,
+        parameters=params,
+    )
+
+    xr.testing.assert_allclose(actual, expected)
+
+
+def test_labor_impact_model_gamma_sampled(gamma, histogram_tasmax, tasmax):
+    """
+    Test that labor_impact_model_gamma runs through muuttaa.project.
+     Checks for generally correct output using sampled gamma as input.
+    """
+    # Build up what we expect output to be.
+    ex_i = np.array([[[0.23013699, 4.83287671], [9.43561644, 14.03835616]]])
+    ex_e = np.array(
+        [
+            [
+                [[0.05890411, 1.2369863], [2.41506849, 3.59315068]],
+                [[0.2890411, 6.06986301], [11.85068493, 17.63150685]],
+            ]
+        ]
+    )
+    expected = xr.Dataset(
+        {
+            "impact": (["region", "sample", "risk_sector"], ex_i),
+            "_effect": (["region", "year", "sample", "risk_sector"], ex_e),
+        },
+        coords={
+            "region": np.array(["foobar"]),
+            "year": np.array([2020, 2050]),
+            "risk_sector": np.array(["low", "high"]),
+            "sample": [0, 1],
+        },
+    )
+
+    # Combine data for input
+    transformed_input = xr.merge([histogram_tasmax, tasmax])
+    # Using rename_vars because model expects "gamma" variable, not "gamma_sampled".
+    params = gamma[["gamma_sampled"]].rename_vars({"gamma_sampled": "gamma"})
+
+    actual = project(
+        transformed_input,
+        model=labor_impact_model_gamma,
+        parameters=params,
     )
 
     xr.testing.assert_allclose(actual, expected)
