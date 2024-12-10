@@ -7,7 +7,6 @@ import os
 import uuid
 
 from dask_gateway import GatewayCluster
-import datatree as dt
 import xarray as xr
 
 
@@ -278,16 +277,16 @@ to_dt = {}
 for k, v in targets.items():
     print(k)  # DEBUG
     to_dt[k] = v.to_dataset()
-cmip5 = dt.DataTree.from_dict(to_dt, name="cmip5")
+cmip5 = xr.DataTree.from_dict(to_dt, name="cmip5")
 cmip5 = cmip5.chunk({"time": 365, "lat": 360, "lon": 360})
 cmip5.to_zarr(OUT_CMIP5_ZARR, mode="w")
 print(OUT_CMIP5_ZARR)
-# gs://rhg-data-scratch/brews/16c38870-f245-472c-b09c-3899a4501716/cmip5.zarr
+# gs://rhg-data-scratch/brews/3d53305d-28c5-4db1-bfbd-73fe79d44c1e/cmip5.zarr
 
 ############ Try to concat/merge hist/future and variable projections #########
 # NOTE: Graph is ~22 MiB so maybe break these down into a time concat and a variable merge step.
 cluster.scale(100)
-cmip5 = dt.open_datatree(OUT_CMIP5_ZARR, engine="zarr", chunks={})
+cmip5 = xr.open_datatree(OUT_CMIP5_ZARR, engine="zarr", chunks={})
 
 # Parse the tree, merging historical and RCP scenarios. Need to handle pattern models appropriately.
 merged = {}
@@ -319,13 +318,13 @@ for scenario_name, scenario_tree in cmip5.children.items():
 
         merged[k] = xr.merge(variable_dss, combine_attrs="drop_conflicts")
 
-new_dt = dt.DataTree.from_dict(merged, name="cmip5")
+new_dt = xr.DataTree.from_dict(merged, name="cmip5")
 # I think we need to rechunk to ensure everything is aligned.
 new_dt = new_dt.chunk({"time": 365, "lat": 360, "lon": 360})
 
 new_dt.to_zarr(OUT_CMIP5_CONCAT_ZARR, mode="w")
 print(OUT_CMIP5_CONCAT_ZARR)
-# gs://rhg-data-scratch/brews/16c38870-f245-472c-b09c-3899a4501716/cmip5_concat.zarr
+# gs://rhg-data-scratch/brews/3d53305d-28c5-4db1-bfbd-73fe79d44c1e/cmip5_concat.zarr
 
 ############ Combine into single dataset with new `ensemble_member`` coord #########
 
@@ -335,7 +334,7 @@ import pandas as pd
 
 cluster.scale(100)
 
-cmip5 = dt.open_datatree(OUT_CMIP5_CONCAT_ZARR, engine="zarr", chunks={})
+cmip5 = xr.open_datatree(OUT_CMIP5_CONCAT_ZARR, engine="zarr", chunks={})
 
 # Might be easier to just parse all leaves of cmip5 but I feel this is likely
 # to have a better error if something goes wrong.
@@ -358,7 +357,7 @@ cmip5_ds.to_zarr(OUT_CMIP5_DS_ZARR, mode="w")
 # TODO: This dask graph is ~75 MiB, consider appending each ensemble_member to zarr storef?
 
 print(OUT_CMIP5_DS_ZARR)
-# gs://rhg-data-scratch/brews/16c38870-f245-472c-b09c-3899a4501716/cmip5_ds.zarr
+# gs://rhg-data-scratch/brews/3d53305d-28c5-4db1-bfbd-73fe79d44c1e/cmip5_ds.zarr
 
 cluster.scale(0)
 cluster.shutdown()
