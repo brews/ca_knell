@@ -51,7 +51,7 @@ df_raw = pd.read_csv(
 df = df_raw
 # Creating a new columns with a shortened GEOID info to only include the information at the resolution of the state level (so as to only include the 06 california code and everything after)
 # Dropping the lengthier GEO_ID Column now that there is a more concise one that will match the California Tiger Shapefile's GEOID scheme
-df["region"] = df_raw["GEO_ID"].str[9:]
+df["region"] = df["GEO_ID"].str[9:]
 
 df = df.drop(["GEO_ID", "NAME"], axis=1)
 df = df.rename(
