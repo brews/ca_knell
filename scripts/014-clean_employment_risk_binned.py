@@ -73,13 +73,13 @@ df = df.rename(
 df = df.set_index("region")
 
 # Reduce sectors into risk sectors
-df["low"] = (
+df["high"] = (
     df["construction"]
     + df["farm_mine_hunt_foresty"]
     + df["manufacturing"]
     + df["transport_warehouse_utility"]
 )
-df["high"] = (
+df["low"] = (
     df["wholesale_trade"]
     + df["retail_trade"]
     + df["information"]
