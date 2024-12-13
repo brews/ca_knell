@@ -18,6 +18,7 @@ OUT_URI = f"{os.environ['CIL_SCRATCH_PREFIX']}/{os.environ['JUPYTERHUB_USER']}/{
 # Need GEOID to be str, otherwise it's read in as int. Need to skip row with field descriptions.
 df_raw = pd.read_csv(
     IN_CSV_URI,
+    na_values=["-"],
     dtype={"GEO_ID": str},
     skiprows=[1],
 )
@@ -30,4 +31,4 @@ df["region"] = df["GEO_ID"].str[9:]
 df = df[["region", "B19301_001E"]].rename(columns={"B19301_001E": "pci"})
 df = df.set_index("region")
 
-df.to_cvs(OUT_URI)
+df.to_csv(OUT_URI)
