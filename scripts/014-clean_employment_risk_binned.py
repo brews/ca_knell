@@ -25,6 +25,7 @@ OUT_URI = f"{os.environ['CIL_SCRATCH_PREFIX']}/{os.environ['JUPYTERHUB_USER']}/{
 df = pd.read_csv(
     IN_CSV_URI,
     dtype={"GEO_ID": str},
+    na_values="-",
     skiprows=[1],
     usecols=[
         "GEO_ID",
@@ -97,4 +98,4 @@ df = df[["total_employed", "high", "low"]]
 for cohort in ["low", "high"]:
     df[f"{cohort}_share"] = df[cohort] / df["total_employed"]
 
-df.to_cvs(OUT_URI)
+df.to_csv(OUT_URI)

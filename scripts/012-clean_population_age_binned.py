@@ -22,6 +22,7 @@ OUT_URI = f"{os.environ['CIL_SCRATCH_PREFIX']}/{os.environ['JUPYTERHUB_USER']}/{
 # Need GEOID to be str, otherwise it's read in as int. Need to skip row with field descriptions.
 df = pd.read_csv(
     IN_CSV_URI,
+    na_values="-",
     dtype={"GEO_ID": str},
     skiprows=[1],
     usecols=[
@@ -135,4 +136,4 @@ for cohort in ["age1", "age2", "age3"]:
 # pop19_sums.plot.barh(color=['grey','blue','blue','blue'])
 
 
-df.to_cvs(OUT_URI)
+df.to_csv(OUT_URI)
