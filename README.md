@@ -2,4 +2,4 @@
 
 [![codecov](https://codecov.io/gh/brews/ca_knell/graph/badge.svg?token=NNGF1P1YVR)](https://codecov.io/gh/brews/ca_knell)
 
-Toybox petting zoo experiment example research project. This work does not represent a complete or representative product of anyones work.
+Toy research project for impacts research. This is just a petting zoo. It's not for real research.
