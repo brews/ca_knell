@@ -16,9 +16,9 @@ def _make_1998_2015_mean(ds: xr.Dataset) -> xr.Dataset:
     Asserts this slicing will give 18 (annual) values across time.
     """
     ds_sub = ds.sel(year=slice("1998", "2015"))
-    assert (
-        ds_sub["year"].size == 18
-    ), "'ds' should have 18 annual values when sliced from 1998 to 2015"
+    assert ds_sub["year"].size == 18, (
+        "'ds' should have 18 annual values when sliced from 1998 to 2015"
+    )
     return ds_sub.mean(dim="year")
 
 
