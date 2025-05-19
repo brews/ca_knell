@@ -3,7 +3,7 @@ cftime==1.6.4.post1
 fsspec==2025.3.2
 metacsv==0.1.1
 muuttaa==0.1.1
-numpy==2.2.5
+numpy==2.2.6
 pandas==2.2.3
 xhistogram==0.3.2
 xarray==2025.4.0
