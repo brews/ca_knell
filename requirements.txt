@@ -9,4 +9,4 @@ xhistogram==0.3.2
 xarray==2025.6.1
 pytest==8.4.0
 pytest-cov==6.2.1
-ruff==0.11.13
+ruff==0.12.0
