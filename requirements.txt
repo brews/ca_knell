@@ -7,6 +7,6 @@ numpy==2.3.0
 pandas==2.3.0
 xhistogram==0.3.2
 xarray==2025.6.1
-pytest==8.4.0
+pytest==8.4.1
 pytest-cov==6.2.1
 ruff==0.11.13
