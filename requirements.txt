@@ -6,7 +6,7 @@ muuttaa==0.1.1
 numpy==2.3.3
 pandas==2.3.2
 xhistogram==0.3.2
-xarray==2025.9.0
+xarray==2025.9.1
 pytest==8.4.2
 pytest-cov==6.3.0
 ruff==0.13.2
