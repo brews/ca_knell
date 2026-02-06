@@ -1,6 +1,6 @@
 # This is just used to semi-hard pin package versions for Github Actions and their dependency graph system.
 cftime==1.6.5
-fsspec==2026.1.0
+fsspec==2026.2.0
 metacsv==0.1.1
 muuttaa==0.1.2
 numpy==2.4.2
