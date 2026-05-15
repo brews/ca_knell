@@ -5,14 +5,14 @@ from io import BufferedIOBase
 from typing import Any
 
 import fsspec
+import isku
 import metacsv
-from muuttaa import SegmentWeights
 import numpy as np
 
 
 def open_carb_segmentweights(
     url: str | PathLike[Any] | BufferedIOBase,
-) -> SegmentWeights:
+) -> isku.GridWeightingRegions:
     """Open SegmentWeights from CARB project weights file"""
     import pandas as pd
 
@@ -24,7 +24,7 @@ def open_carb_segmentweights(
     sw = sw.to_xarray().rename_vars(
         {"longitude": "lon", "latitude": "lat", "GEOID": "region"}
     )
-    return SegmentWeights(sw)
+    return isku.GridWeightingRegions(sw)
 
 
 def read_csvv(filename):

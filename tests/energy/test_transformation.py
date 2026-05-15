@@ -1,4 +1,4 @@
-from muuttaa import apply_transformations, SegmentWeights
+import isku
 import numpy as np
 import pytest
 import xarray as xr
@@ -11,7 +11,7 @@ from ca_knell.energy.transformation import (
 
 @pytest.fixture
 def basic_segment_weights():
-    sw = SegmentWeights(
+    sw = isku.GridWeightingRegions(
         weights=xr.Dataset(
             {
                 "region": (["idx"], ["foobar"]),
@@ -67,10 +67,10 @@ def test_make_auffhammer_degreedays_1998_2015_mean(
         coords={"region": np.array(["foobar"])},
     )
 
-    actual = apply_transformations(
+    actual = isku.extract_regions(
         tasmax_tasmin,
-        strategies=[make_auffhammer_degreedays_1998_2015_mean],
-        regionalize=basic_segment_weights,
+        template=make_auffhammer_degreedays_1998_2015_mean,
+        regions=basic_segment_weights,
     )
     xr.testing.assert_allclose(actual, expected)
 
@@ -92,9 +92,9 @@ def test_make_auffhammer_degreedays_21yrmean(basic_segment_weights, tasmax_tasmi
         },
     )
 
-    actual = apply_transformations(
+    actual = isku.extract_regions(
         tasmax_tasmin,
-        strategies=[make_auffhammer_degreedays_21yrmean],
-        regionalize=basic_segment_weights,
+        template=make_auffhammer_degreedays_21yrmean,
+        regions=basic_segment_weights,
     )
     xr.testing.assert_allclose(actual.dropna("year"), expected)

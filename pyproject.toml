@@ -20,16 +20,21 @@ requires-python = ">=3.12"
 dependencies = [
   "fsspec",
   "metacsv",
-  "muuttaa",
   "numpy",
   "pandas",
   "xhistogram",
-  "xarray",
+  "xarray>=2026.4.0",
   "cftime",
+  "isku>=0.3.0",
 ]
 
 [dependency-groups]
-test = ["pytest>=9.0.3", "pytest-cov>=7.1.0", "ruff>=0.15.10"]
+test = [
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.10",
+    "ty>=0.0.36",
+]
 dev = [{ include-group = "test" }]
 
 [project.urls]

@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import xarray as xr
 
@@ -56,6 +56,6 @@ def test_labor_valuation_model():
         },
     )
 
-    actual = project(impact, model=labor_valuation_model, parameters=params)
+    actual = isku.project(xr.merge([impact, params]), model=labor_valuation_model)
 
     xr.testing.assert_allclose(actual, expected)

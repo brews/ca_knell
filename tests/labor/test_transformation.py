@@ -1,4 +1,4 @@
-from muuttaa import apply_transformations, SegmentWeights
+import isku
 import numpy as np
 import pytest
 import xarray as xr
@@ -8,7 +8,7 @@ from ca_knell.labor.transformation import make_tasmax_20yrmean_annual_histogram
 
 @pytest.fixture
 def basic_segment_weights():
-    sw = SegmentWeights(
+    sw = isku.GridWeightingRegions(
         weights=xr.Dataset(
             {
                 "region": (["idx"], ["foobar"]),
@@ -65,9 +65,9 @@ def test_make_tasmax_20yrmean_annual_histogram(basic_segment_weights):
         },
     )
 
-    actual = apply_transformations(
+    actual = isku.extract_regions(
         ds_in,
-        strategies=[make_tasmax_20yrmean_annual_histogram],
-        regionalize=basic_segment_weights,
+        template=make_tasmax_20yrmean_annual_histogram,
+        regions=basic_segment_weights,
     )
     xr.testing.assert_allclose(actual, expected)

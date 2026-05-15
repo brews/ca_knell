@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import xarray as xr
 
@@ -53,6 +53,6 @@ def test_energy_valuation_model():
         },
     )
 
-    actual = project(impact, model=energy_valuation_model, parameters=params)
+    actual = isku.project(xr.merge([impact, params]), model=energy_valuation_model)
 
     xr.testing.assert_allclose(actual, expected)

@@ -2,7 +2,7 @@
 Logic for labor transformation and regionalization.
 """
 
-from muuttaa import TransformationStrategy
+import isku
 import numpy as np
 import xarray as xr
 from xhistogram.xarray import histogram
@@ -26,7 +26,7 @@ def _make_tasmax_20yrmean_annual_histogram(ds: xr.Dataset) -> xr.Dataset:
     return tasmax_histogram_20yr.astype("float32")
 
 
-make_tasmax_20yrmean_annual_histogram = TransformationStrategy(
-    preprocess=_make_tasmax_20yrmean_annual_histogram,
-    postprocess=_no_processing,
+make_tasmax_20yrmean_annual_histogram = isku.build_extraction_template(
+    pre=_make_tasmax_20yrmean_annual_histogram,
+    post=_no_processing,
 )

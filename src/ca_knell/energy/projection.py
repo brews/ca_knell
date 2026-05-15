@@ -2,7 +2,7 @@
 Logic for projecting energy impacts from transformed data.
 """
 
-from muuttaa import Projector
+import isku
 import pandas as pd
 import xarray as xr
 
@@ -27,7 +27,7 @@ def _energy_impact_model(ds: xr.Dataset) -> xr.Dataset:
     ).astype("float32")
 
     # take dot product of covars, preds, gammas by model
-    _effect = betas.map(lambda x: xr.dot(x, climpreds, dims=["predictor"]))
+    _effect = betas.map(lambda x: xr.dot(x, climpreds, dim=["predictor"]))
 
     # impacts are difference of future - historical effect
     impact = _effect.sel(year=2050) - _effect.sel(year=2020)
@@ -35,8 +35,8 @@ def _energy_impact_model(ds: xr.Dataset) -> xr.Dataset:
     return impact
 
 
-energy_impact_model = Projector(
-    preprocess=_no_processing,
+energy_impact_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_energy_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
