@@ -8,30 +8,29 @@ description = "Petting zoo playing with climate impact projections with muuttaa"
 readme = "README.md"
 dynamic = ["version"]
 classifiers = [
-    "Intended Audience :: Developers",
-    "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Topic :: Scientific/Engineering",
-    "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering",
+  "Operating System :: OS Independent",
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "fsspec",
-    "metacsv",
-    "muuttaa",
-    "numpy",
-    "pandas",
-    "xhistogram",
-    "xarray",
+  "fsspec",
+  "metacsv",
+  "muuttaa",
+  "numpy",
+  "pandas",
+  "xhistogram",
+  "xarray",
+  "cftime",
 ]
 
-[project.optional-dependencies]
-test = [
-    "pytest",
-    "ruff>=0.1.7",
-]
+[dependency-groups]
+test = ["pytest>=9.0.3", "pytest-cov>=7.1.0", "ruff>=0.15.10"]
+dev = [{ include-group = "test" }]
 
 [project.urls]
 Homepage = "https://github.com/brews/ca_knell"
@@ -47,9 +46,7 @@ fallback-version = "999"
 version-file = "src/ca_knell/_version.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-    "/.github",
-]
+exclude = ["/.github"]
 
 [tool.pytest.ini_options]
 addopts = ["--ignore=scripts"]
@@ -60,16 +57,13 @@ exclude = ["scripts/*.py"]
 [tool.ruff.lint]
 # E402: module level import not at top of file
 # E501: long lines
-ignore = [
-    "E402",
-    "E501",
-]
+ignore = ["E402", "E501"]
 select = [
-    # Pyflakes
-    "F",
-    # Pycodestyle
-    "E",
-    "W",
-    # Pyupgrade
-    "UP",
+  # Pyflakes
+  "F",
+  # Pycodestyle
+  "E",
+  "W",
+  # Pyupgrade
+  "UP",
 ]
