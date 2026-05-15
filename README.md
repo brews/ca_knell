@@ -2,7 +2,7 @@
 
 [![codecov](https://codecov.io/gh/brews/ca_knell/graph/badge.svg?token=NNGF1P1YVR)](https://codecov.io/gh/brews/ca_knell)
 
-Toy research project for impacts research.
+Toy impacts research project on California census tracts.
 
 > [!CAUTION]
 > This is just a petting zoo. It's not for real research.
