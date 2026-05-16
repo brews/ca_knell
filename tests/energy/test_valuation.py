@@ -7,7 +7,7 @@ from ca_knell.energy.valuation import energy_valuation_model
 
 def test_energy_valuation_model():
     """
-    Test energy_valuation_model can run through muuttaa.project.
+    Test energy_valuation_model can run through isku.project.
     Does basic check of output.
     """
     expected = xr.Dataset(

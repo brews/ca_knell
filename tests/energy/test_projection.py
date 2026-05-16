@@ -53,7 +53,7 @@ def dds():
 
 def test_energy_impact_model(beta, dds):
     """
-    Test that energy_impact_model runs through muuttaa.project with generally correct output.
+    Test that energy_impact_model runs through isku.project with generally correct output.
     """
     expected = xr.Dataset(
         {

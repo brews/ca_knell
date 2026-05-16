@@ -83,7 +83,7 @@ def tasmax():
 
 def test_labor_impact_model(beta, histogram_tasmax):
     """
-    Test that labor_impact_model runs through muuttaa.project with generally correct output.
+    Test that labor_impact_model runs through isku.project with generally correct output.
     """
     expected = xr.Dataset(
         {
@@ -110,7 +110,7 @@ def test_labor_impact_model(beta, histogram_tasmax):
 
 def test_labor_impact_model_gamma_mean(gamma, histogram_tasmax, tasmax):
     """
-    Test that labor_impact_model_gamma runs through muuttaa.project.
+    Test that labor_impact_model_gamma runs through isku.project.
      Checks for generally correct output using mean gamma as input.
     """
     # Build up what we expect output to be.
@@ -143,7 +143,7 @@ def test_labor_impact_model_gamma_mean(gamma, histogram_tasmax, tasmax):
 
 def test_labor_impact_model_gamma_sampled(gamma, histogram_tasmax, tasmax):
     """
-    Test that labor_impact_model_gamma runs through muuttaa.project.
+    Test that labor_impact_model_gamma runs through isku.project.
      Checks for generally correct output using sampled gamma as input.
     """
     # Build up what we expect output to be.

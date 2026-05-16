@@ -55,7 +55,7 @@ def test_make_auffhammer_degreedays_1998_2015_mean(
     basic_segment_weights, tasmax_tasmin
 ):
     """
-    Test make_auffhammer_degreedays_1998_2015_mean transformation runs through muuttaa.apply_transformation with basic_segment_weights
+    Test make_auffhammer_degreedays_1998_2015_mean transformation runs through isku.extract_regions with basic_segment_weights
     Does some basic/lazy checks for correctness in the output.
     """
     expected = xr.Dataset(
@@ -77,7 +77,7 @@ def test_make_auffhammer_degreedays_1998_2015_mean(
 
 def test_make_auffhammer_degreedays_21yrmean(basic_segment_weights, tasmax_tasmin):
     """
-    Test make_auffhammer_degreedays_21yrmean transformation runs through muuttaa.apply_transformation with basic_segment_weights
+    Test make_auffhammer_degreedays_21yrmean transformation runs through isku.extract_regions with basic_segment_weights
     Does some basic/lazy checks for correctness in the output.
     """
     expected = xr.Dataset(

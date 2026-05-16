@@ -23,7 +23,7 @@ def basic_segment_weights():
 
 def test_make_tasmax_20yrmean_annual_histogram(basic_segment_weights):
     """
-    Test make_tasmax_20yrmean_annual_histogram transformation runs through muuttaa.apply_transformation with basic_segment_weights
+    Test make_tasmax_20yrmean_annual_histogram transformation runs through isku.extract_regions with basic_segment_weights
     Does some basic/lazy checks for correctness in the output.
     """
     expected = xr.Dataset(
