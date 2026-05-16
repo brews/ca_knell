@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ca_knell"
-description = "Petting zoo playing with climate impact projections with muuttaa"
+description = "Petting zoo playing with climate impact projections with isku"
 readme = "README.md"
 dynamic = ["version"]
 classifiers = [

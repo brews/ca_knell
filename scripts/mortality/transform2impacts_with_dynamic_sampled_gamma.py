@@ -1,4 +1,4 @@
-%pip install muuttaa==0.1.0 metacsv
+%pip install isku==0.3.0 metacsv
 
 
 import datetime
@@ -15,10 +15,8 @@ from dask_gateway import GatewayCluster
 import datatree as dt
 import fsspec
 import metacsv
-from muuttaa import SegmentWeights
+import isku
 import numpy as np
-from muuttaa import apply_transformations, project, Projector
-from muuttaa import TransformationStrategy
 import pandas as pd
 import xarray as xr
 from xhistogram.xarray import histogram
@@ -40,7 +38,7 @@ IMPACTS_OUT_URI = f"gs://rhg-data-scratch/brews/{UID}/impacts_mortality.zarr"
 
 def open_carb_segmentweights(
         url: str | PathLike[Any] | BufferedIOBase,
-) -> SegmentWeights:
+) -> isku.GridWeightingRegions:
     """Open SegmentWeights from CARB project weights file"""
     import pandas as pd
 
@@ -52,7 +50,7 @@ def open_carb_segmentweights(
     sw = sw.to_xarray().rename_vars(
         {"longitude": "lon", "latitude": "lat", "GEOID": "region"}
     )
-    return SegmentWeights(sw)
+    return isku.GridWeightingRegions(sw)
 
 
 def read_csvv(filename):
@@ -176,9 +174,9 @@ def _make_30hbartlett_climtas(ds: xr.Dataset) -> xr.Dataset:
     return da.to_dataset(name="climtas").astype("float32")
 
 
-make_climtas = TransformationStrategy(
-    preprocess=_make_annual_tas,
-    postprocess=_make_30hbartlett_climtas,
+make_climtas = isku.build_extraction_template(
+    pre=_make_annual_tas,
+    post=_make_30hbartlett_climtas,
 )
 
 
@@ -196,9 +194,9 @@ def _make_tas_20yrmean_annual_histogram(ds: xr.Dataset) -> xr.Dataset:
     return tas_histogram_20yr.astype("float32")
 
 
-make_tas_20yrmean_annual_histogram = TransformationStrategy(
-    preprocess=_make_tas_20yrmean_annual_histogram,
-    postprocess=_no_processing,
+make_tas_20yrmean_annual_histogram = isku.build_extraction_template(
+    pre=_make_tas_20yrmean_annual_histogram,
+    post=_no_processing,
 )
 
 # Betas from Gammas #####################################################
@@ -333,10 +331,10 @@ def _mortality_impact_model(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you have gamma and need to compute beta.
-mortality_impact_model_gamma = Projector(
-    preprocess=_beta_from_gamma,
+mortality_impact_model_gamma = isku.build_projection_template(
+    pre=_beta_from_gamma,
     project=_mortality_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 ##########################################################################
@@ -442,10 +440,10 @@ def _mortality_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     return out
 
 
-mortality_valuation_model = Projector(
-    preprocess=_no_processing,
+mortality_valuation_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_mortality_valuation_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 # Run #########################################################################
@@ -469,7 +467,7 @@ def _merge_impact_inputs(x):
     """
     Merge and rechunk mortality impact projection inputs and parameters before projecting.
 
-    This is to be passed to ``muuttaa.project()`` "merge_predictors_parameters" argument.
+    Output from this gets passed to ``isku.project()``.
     This custom merging is needed because parameters and transformed
     data have different regions. The gamma parameter can also have multiple
     samples. Rechunking after they've merged ensures the chunk sizes
@@ -491,14 +489,10 @@ with GatewayCluster(
     print(client.dashboard_link)
     cluster.scale(50)
 
-    transformed = apply_transformations(
-        test_ds,
-        regionalize=segment_weights,
-        strategies=[
-            make_climtas,
-            make_tas_20yrmean_annual_histogram,
-        ],
-    )
+    transformed = xr.merge([
+        isku.extract_regions(test_ds, regions=segment_weights, template=t)
+        for t in [make_climtas, make_tas_20yrmean_annual_histogram] 
+    ])
 
     transformed = (
         transformed
@@ -508,19 +502,16 @@ with GatewayCluster(
     )
     # transformed = transformed.persist()
 
-    mortality_impacts = project(
-        transformed,
+    mortality_impacts = isku.project(
+        _merge_impact_inputs([transformed, impact_gamma_params]),
         model=mortality_impact_model_gamma,
-        parameters=impact_gamma_params,
-        merge_predictors_parameters=_merge_impact_inputs,
     )
     mortality_impacts = mortality_impacts.compute()
 
 # Don't need dask cluster to value damages.
-mortality_damages = project(
-    mortality_impacts,
+mortality_damages = isku.project(
+    xr.merge([mortality_impacts, valuation_params]),
     model=mortality_valuation_model,
-    parameters=valuation_params,
 )
 mortality_damages = mortality_damages.compute()
 print(mortality_damages)
@@ -548,14 +539,10 @@ client = cluster.get_client()
 print(client.dashboard_link)
 cluster.scale(50)
 
-transformed = apply_transformations(
-    test_ds,
-    regionalize=segment_weights,
-    strategies=[
-        make_climtas,
-        make_tas_20yrmean_annual_histogram,
-    ],
-)
+transformed = xr.merge([
+    isku.extract_regions(test_ds, regions=segment_weights, template=t)
+    for t in [make_climtas, make_tas_20yrmean_annual_histogram] 
+])
 
 # Convert units and subset data to just 2020 and 2050
 # Most of this should be in transformations.
@@ -574,10 +561,9 @@ print("Data transformed and loaded")
 sampled_impacts = []
 for s in impact_gamma_params["sample"].values:
     print(f"On sample {s}")
-    this_impact = project(
-        transformed,
+    this_impact = isku.project(
+        xr.merge([transformed,impact_gamma_params.sel(sample=s, drop=True)]),  # uclip struggles unless 'sample' dim is dropped.
         model=mortality_impact_model_gamma,
-        parameters=impact_gamma_params.sel(sample=s, drop=True),  # uclip struggles unless 'sample' dim is dropped.
     )
     print("\tready to compute this impact")
     this_impact = this_impact.compute()
@@ -607,10 +593,9 @@ with GatewayCluster(
 
     transformed = xr.open_zarr(TRANSFORMED_OUT_URI)
 
-    mortality_impacts = project(
-        transformed,
+    mortality_impacts = isku.project(
+        xr.merge([transformed, impact_gamma_params]),
         model=mortality_impact_model_gamma,
-        parameters=impact_gamma_params,
     )
     display(mortality_impacts)
     mortality_impacts.to_zarr(IMPACTS_OUT_URI, mode="w")

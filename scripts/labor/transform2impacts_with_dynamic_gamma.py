@@ -5,13 +5,7 @@ from os import PathLike
 from io import BufferedIOBase
 from typing import Any
 
-from muuttaa import (
-    TransformationStrategy,
-    Projector,
-    SegmentWeights,
-    apply_transformations,
-    project,
-)
+import isku
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -39,7 +33,7 @@ GAMMA_URI = (
 
 def open_carb_segmentweights(
     url: str | PathLike[Any] | BufferedIOBase,
-) -> SegmentWeights:
+) -> isku.GridWeightingRegions:
     """Open SegmentWeights from CARB project weights file"""
     import pandas as pd
 
@@ -51,7 +45,7 @@ def open_carb_segmentweights(
     sw = sw.to_xarray().rename_vars(
         {"longitude": "lon", "latitude": "lat", "GEOID": "region"}
     )
-    return SegmentWeights(sw)
+    return isku.GridWeightingRegions(sw)
 
 
 def _no_processing(ds: xr.Dataset) -> xr.Dataset:
@@ -72,9 +66,9 @@ def _make_tasmax_20yrmean_annual_histogram(ds: xr.Dataset) -> xr.Dataset:
     return tasmax_histogram_20yr.astype("float32")
 
 
-make_tasmax_20yrmean_annual_histogram = TransformationStrategy(
-    preprocess=_make_tasmax_20yrmean_annual_histogram,
-    postprocess=_no_processing,
+make_tasmax_20yrmean_annual_histogram = isku.build_extraction_template(
+    pre=_make_tasmax_20yrmean_annual_histogram,
+    post=_no_processing,
 )
 
 
@@ -99,10 +93,10 @@ def _labor_impact_model(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you already have beta.
-labor_impact_model = Projector(
-    preprocess=_no_processing,
+labor_impact_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_labor_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 
@@ -170,10 +164,10 @@ def _beta_from_gamma(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you have gamma and need to compute beta.
-labor_impact_model_gamma = Projector(
-    preprocess=_beta_from_gamma,  # Not sure this should be preprocess but I'm lazy.
+labor_impact_model_gamma = isku.build_projection_template(
+    pre=_beta_from_gamma,  # Not sure this should be preprocess but I'm lazy.
     project=_labor_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 
@@ -204,10 +198,10 @@ def _labor_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     return out
 
 
-labor_valuation_model = Projector(
-    preprocess=_no_processing,
+labor_valuation_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_labor_valuation_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 #### Read in and parse population data, socioeconomics, parameters ###################################
@@ -290,7 +284,7 @@ def _merge_impact_inputs(x):
     """
     Merge and rechunk mortality impact projection inputs and parameters before projecting.
 
-    This is to be passed to ``muuttaa.project()`` "merge_predictors_parameters" argument.
+    Output from this is to be passed to ``isku.project()``.
     This custom merging is needed because parameters and transformed
     data have different regions. The gamma parameter can also have multiple
     samples. Rechunking after they've merged ensures the chunk sizes
@@ -311,10 +305,10 @@ with GatewayCluster(
     print(client.dashboard_link)
     cluster.scale(50)
 
-    transformed = apply_transformations(
+    transformed = isku.extract_regions(
         test_ds,
-        regionalize=segment_weights,
-        strategies=[make_tasmax_20yrmean_annual_histogram],
+        regions=segment_weights,
+        template=make_tasmax_20yrmean_annual_histogram,
     )
 
     transformed = (
@@ -324,18 +318,15 @@ with GatewayCluster(
     )
     transformed = transformed.compute()
 
-    labor_impacts = project(
-        transformed,
+    labor_impacts = isku.project(
+        _merge_impact_inputs([transformed, impact_params]),
         model=labor_impact_model_gamma,
-        parameters=impact_params,  # TODO: Muuttaa update -> What if have not parameters?
-        merge_predictors_parameters=_merge_impact_inputs,  # Important if we're using sampled gammas.
     )
     labor_impacts = labor_impacts.compute()
 
-    labor_damages = project(
-        labor_impacts,
+    labor_damages = isku.project(
+        xr.merge([labor_impacts, valuation_params]),
         model=labor_valuation_model,
-        parameters=valuation_params,
     )
     labor_damages = labor_damages.compute()
 print(labor_damages)

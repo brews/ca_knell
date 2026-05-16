@@ -1,6 +1,6 @@
 # apply_transforms test
 
-# %pip install muuttaa==0.1.0
+# %pip install isku==0.3.0
 
 import datetime
 import os
@@ -14,7 +14,7 @@ from typing import Any
 
 from dask_gateway import GatewayCluster
 import datatree as dt
-from muuttaa import TransformationStrategy, SegmentWeights, apply_transformations
+import isku
 import numpy as np
 import xarray as xr
 from xhistogram.xarray import histogram
@@ -31,7 +31,7 @@ CARB_SEGMENT_WEIGHTS_URL = "gs://rhg-data/impactlab-rhg/client-projects/2021-car
 OUT_URL = f"{os.environ['CIL_SCRATCH_PREFIX']}/{os.environ['JUPYTERHUB_USER']}/{UID}/cmip5_transformed_test.zarr"
 
 
-########### Defining here because I'm too lazy to import muuttaa
+########### Defining here because I'm too lazy to import isku
 
 # from collections.abc import Callable, Sequence
 # from dataclasses import dataclass
@@ -124,7 +124,7 @@ OUT_URL = f"{os.environ['CIL_SCRATCH_PREFIX']}/{os.environ['JUPYTERHUB_USER']}/{
 
 def open_carb_segmentweights(
     url: str | PathLike[Any] | BufferedIOBase,
-) -> SegmentWeights:
+) -> isku.GridWeightingRegions:
     """Open SegmentWeights from CARB project weights file"""
     import pandas as pd
 
@@ -136,7 +136,7 @@ def open_carb_segmentweights(
     sw = sw.to_xarray().rename_vars(
         {"longitude": "lon", "latitude": "lat", "GEOID": "region"}
     )
-    return SegmentWeights(sw)
+    return isku.GridWeightingRegions(sw)
 
 
 ########### Define transformations
@@ -168,9 +168,9 @@ def make_30hbartlett_climtas(ds: xr.Dataset) -> xr.Dataset:
     return da.to_dataset(name="climtas").astype("float32")
 
 
-make_climtas = TransformationStrategy(
-    preprocess=make_annual_tas,
-    postprocess=make_30hbartlett_climtas,
+make_climtas = isku.build_extraction_template(
+    pre=make_annual_tas,
+    post=make_30hbartlett_climtas,
 )
 
 
@@ -188,9 +188,9 @@ def _make_tas_20yrmean_annual_histogram(ds: xr.Dataset) -> xr.Dataset:
     return tas_histogram_20yr.astype("float32")
 
 
-make_tas_20yrmean_annual_histogram = TransformationStrategy(
-    preprocess=_make_tas_20yrmean_annual_histogram,
-    postprocess=_no_processing,
+make_tas_20yrmean_annual_histogram = isku.build_extraction_template(
+    pre=_make_tas_20yrmean_annual_histogram,
+    post=_no_processing,
 )
 
 
@@ -211,14 +211,14 @@ cmip5 = dt.open_datatree(CMIP5_URL, engine="zarr", chunks={}).chunk(
 )
 test_ds = cmip5["rcp45/ACCESS1-0"].ds
 
-transformed = apply_transformations(
+transformed = xr.merge([isku.extract_regions(
     test_ds,
-    regionalize=segment_weights,
-    strategies=[
+    regions=segment_weights,
+    template=t,
+)for t in [
         make_climtas,
         make_tas_20yrmean_annual_histogram,
-    ],
-)
+    ]])
 
 transformed.chunk({"year": -1, "region": -1, "tas_bin": 30}).to_zarr(OUT_URL, mode="w")
 print(OUT_URL)
@@ -235,12 +235,12 @@ cmip5 = dt.open_datatree(CMIP5_URL, engine="zarr", chunks={}).chunk(
 )
 
 transformed = cmip5.map_over_subtree(
-    apply_transformations,
-    regionalize=segment_weights,
-    strategies=[
+    lambda ds: xr.merge([
+                        isku.extract_regions(ds, regions=segment_weights, template=t)
+                        for t in [
         make_climtas,
         make_tas_20yrmean_annual_histogram,
-    ],
+    ]])
 )
 
 transformed.chunk({"year": -1, "region": -1, "tas_bin": 30}).to_zarr(OUT_URL, mode="w")

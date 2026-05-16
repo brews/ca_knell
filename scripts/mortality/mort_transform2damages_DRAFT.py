@@ -1,4 +1,4 @@
-# %pip install muuttaa==0.1.0 metacsv
+# %pip install isku==0.3.0 metacsv
 
 import datetime
 import os
@@ -6,7 +6,7 @@ import uuid
 
 from dask_gateway import GatewayCluster
 import datatree as dt
-from muuttaa import apply_transformations, project
+import isku
 import pandas as pd
 import xarray as xr
 
@@ -30,6 +30,10 @@ CARB_SEGMENT_WEIGHTS_URL = "gs://rhg-data/impactlab-rhg/client-projects/2021-car
 BETA_PATH = "/gcs/rhg-data/impactlab-rhg/client-projects/2021-carb-cvm/betas/clipped_mortality_betas_loggdppc_residual_scaled.nc4"
 POP_URI = "gs://rhg-data/impactlab-rhg/client-projects/2021-carb-cvm/data-prep/output_data/population_age_binned.csv"
 PCI2019_URI = "gs://rhg-data/impactlab-rhg/client-projects/2021-carb-cvm/data-prep/output_data/PCI_2019.csv"
+
+def apply_transformations(ds, regionalize, strategies):
+    """Sugar to extract regions"""
+    return xr.merge([isku.extract_regions(ds, regions=regionalize, template=t) for t in strategies])
 
 
 segment_weights = open_carb_segmentweights(CARB_SEGMENT_WEIGHTS_URL)
@@ -125,14 +129,13 @@ with GatewayCluster(
     )
     transformed = transformed.compute()
 
-mortality_impacts = project(
-    transformed, model=mortality_impact_model, parameters=xr.merge([pop, beta])
+mortality_impacts = isku.project(
+    xr.merge([transformed, pop, beta]), model=mortality_impact_model,
 )
 
-mortality_damages = project(
-    mortality_impacts,
+mortality_damages = isku.project(
+    xr.merge([mortality_impacts, valuation_params]),
     model=mortality_valuation_model,
-    parameters=valuation_params,
 )
 mortality_damages = mortality_damages.compute()
 

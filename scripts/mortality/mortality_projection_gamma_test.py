@@ -1,12 +1,12 @@
 # Mortality impact projection
 # This version uses gammas as input to the projection model.
 
-%pip install muuttaa==0.1.0
+%pip install isku==0.3.0
 
 
 import datatree
 from ca_knell.io import read_csvv
-from muuttaa import Projector, project
+import isku
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -270,20 +270,19 @@ def _mortality_impact_model(ds: xr.Dataset) -> xr.Dataset:
     return xr.Dataset({"impact": impact, "_effect": _effect})
 
 
-mortality_impact_model = Projector(
-    preprocess=_tas_unit_conversion,
+mortality_impact_model = isku.build_projection_template(
+    pre=_tas_unit_conversion,
     project=_mortality_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 ########### Running on single dataset
 
 test_ds = cmip5["rcp45/ACCESS1-0"].to_dataset()
 
-mortality_impacts = project(
-    test_ds,
+mortality_impacts = isku.project(
+    xr.merge([test_ds, pop, beta]),
     model=mortality_impact_model,
-    parameters=xr.merge([pop, beta]),
 )
 mortality_impacts = mortality_impacts.compute()
 
@@ -298,9 +297,7 @@ mortality_impacts = mortality_impacts.compute()
 ########### Running on ensemble tree
 
 mortality_impacts = cmip5.map_over_subtree(
-    project,
-    model=mortality_impact_model,
-    parameters=xr.merge([pop, beta]),
+    lambda ds: isku.project(xr.merge([ds, pop, beta]), model=mortality_impact_model)
 )
 mortality_impacts = mortality_impacts.compute()
 
