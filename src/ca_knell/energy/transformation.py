@@ -2,7 +2,7 @@
 Logic for energy transformation and regionalization.
 """
 
-from muuttaa import TransformationStrategy
+import isku
 import xarray as xr
 
 from ca_knell.energy.auffhammer2022 import auffhammer_dds
@@ -23,8 +23,8 @@ def _make_1998_2015_mean(ds: xr.Dataset) -> xr.Dataset:
 
 
 # This is applied to PRISM and CMIP ensemble to create a delta for delta-adjustment.
-make_auffhammer_degreedays_1998_2015_mean = TransformationStrategy(
-    preprocess=auffhammer_dds, postprocess=_make_1998_2015_mean
+make_auffhammer_degreedays_1998_2015_mean = isku.build_extraction_template(
+    pre=auffhammer_dds, post=_make_1998_2015_mean
 )
 
 
@@ -33,6 +33,6 @@ def _make_21yrmean(ds: xr.Dataset) -> xr.Dataset:
 
 
 # This is the main transformation for the sectors impact model. Note, it does not do delta-adjustment of the variables.
-make_auffhammer_degreedays_21yrmean = TransformationStrategy(
-    preprocess=auffhammer_dds, postprocess=_make_21yrmean
+make_auffhammer_degreedays_21yrmean = isku.build_extraction_template(
+    pre=auffhammer_dds, post=_make_21yrmean
 )

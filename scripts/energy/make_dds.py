@@ -6,8 +6,8 @@ from ca_knell.energy.transformation import make_auffhammer_degreedays_1998_2015_
 from ca_knell.io import open_carb_segmentweights
 from dask_gateway import GatewayCluster
 import datatree as dt
+import isku
 import geopandas as gpd
-from muuttaa import apply_transformations
 import xarray as xr
 
 JUPYTER_IMAGE = os.environ.get("JUPYTER_IMAGE")
@@ -33,20 +33,21 @@ prism = (
 )
 prism_segment_weights = open_carb_segmentweights(PRISM_SEGMENT_WEIGHTS_URL)
 
-
-def fuzzy_prism_regionalization(x: xr.Dataset):
+class FuzzyPrism(isku.RegionExtractor):
     """
     Custom regionalization function for PRISM field, subset population-weight, and aggregate to California census tract regions.
 
     Weight and climate grid lat/lon matching needs to be fuzzy enough to compensate for offset grid without reaching into adjacent grid points.
     """
-    region_sel = x.sel(
-        lat=prism_segment_weights._data["lat"],
-        lon=prism_segment_weights._data["lon"],
-        method="nearest", tolerance=0.03,
-    ) # For PRISM 2.5 degree minute grid.
-    out = (region_sel * prism_segment_weights._data["weight"]).groupby(prism_segment_weights._data["region"]).sum()
-    return out
+
+    def extract_regions(self, ds: xr.Dataset) -> xr.Dataset:
+        region_sel = ds.sel(
+            lat=prism_segment_weights._data["lat"],
+            lon=prism_segment_weights._data["lon"],
+            method="nearest", tolerance=0.03,
+        ) # For PRISM 2.5 degree minute grid.
+        out = (region_sel * prism_segment_weights._data["weight"]).groupby(prism_segment_weights._data["region"]).sum()
+        return out
 
 
 segment_weights = open_carb_segmentweights(CARB_SEGMENT_WEIGHTS_URI)
@@ -67,27 +68,27 @@ cluster.scale(50)
 # First we need to create a "delta": comparing PRISM and GCM DDS over a period.
 # The difference is a delta, which we then apply to the transformed data in
 # future projecting GCM runs as an additive adjustment, before impact projection.
-dds_baseline = apply_transformations(
+dds_baseline = isku.extract_regions(
     prism.sel(time=slice("1998", "2015")),  # Time slice data early to make calculation faster.
-    strategies=[make_auffhammer_degreedays_1998_2015_mean],
-    regionalize=fuzzy_prism_regionalization,
+    template=make_auffhammer_degreedays_1998_2015_mean,
+    regions=FuzzyPrism(),
 )
 # dds_baseline = dds_baseline.compute()
 
-dds_gcm = apply_transformations(
+dds_gcm = isku.extract_regions(
     test_ds.sel(time=slice("1998", "2015")) - 273.15,  # Time slice data early to make calculation faster. Convert K to degC.
-    strategies=[make_auffhammer_degreedays_1998_2015_mean],
-    regionalize=segment_weights,
+    template=make_auffhammer_degreedays_1998_2015_mean,
+    regions=segment_weights,
 )
 # dds_gcm = dds_gcm.compute()
 
 dds_delta = dds_baseline - dds_gcm
 dds_delta = dds_delta.compute()
 
-transformed = apply_transformations(
+transformed = isku.extract_regions(
     test_ds,
-    strategies=[make_auffhammer_degreedays_21yrmean],
-    regionalize=segment_weights,
+    template=make_auffhammer_degreedays_21yrmean,
+    regions=segment_weights,
 )
 # Apply delta shift to adjust DD variables before impact modeling.
 # TODO: Likely need to do this for each variable? What if non-DD variables in datasets?

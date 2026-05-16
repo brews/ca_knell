@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import xarray as xr
 
@@ -7,7 +7,7 @@ from ca_knell.labor.valuation import labor_valuation_model
 
 def test_labor_valuation_model():
     """
-    Test labor_valuation_model can run through muuttaa.project.
+    Test labor_valuation_model can run through isku.project.
     Does basic check of output.
     """
     expected = xr.Dataset(
@@ -56,6 +56,6 @@ def test_labor_valuation_model():
         },
     )
 
-    actual = project(impact, model=labor_valuation_model, parameters=params)
+    actual = isku.project(xr.merge([impact, params]), model=labor_valuation_model)
 
     xr.testing.assert_allclose(actual, expected)

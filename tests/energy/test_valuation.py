@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import xarray as xr
 
@@ -7,7 +7,7 @@ from ca_knell.energy.valuation import energy_valuation_model
 
 def test_energy_valuation_model():
     """
-    Test energy_valuation_model can run through muuttaa.project.
+    Test energy_valuation_model can run through isku.project.
     Does basic check of output.
     """
     expected = xr.Dataset(
@@ -53,6 +53,6 @@ def test_energy_valuation_model():
         },
     )
 
-    actual = project(impact, model=energy_valuation_model, parameters=params)
+    actual = isku.project(xr.merge([impact, params]), model=energy_valuation_model)
 
     xr.testing.assert_allclose(actual, expected)

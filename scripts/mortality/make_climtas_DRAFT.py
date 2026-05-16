@@ -5,7 +5,7 @@ import xarray as xr
 
 
 ###########################################################################
-# To muuttaa
+# To isku
 ###########################################################################
 
 
@@ -57,9 +57,9 @@ def make_30hbartlett_climtas(ds: xr.Dataset) -> xr.Dataset:
     return da.to_dataset(name="climtas")
 
 
-make_climtas = TransformationStrategy(
-    preprocess=make_annual_tas,
-    postprocess=make_30hbartlett_climtas,
+make_climtas = isku.build_extraction_template(
+    pre=make_annual_tas,
+    post=make_30hbartlett_climtas,
 )
 
 

@@ -102,9 +102,9 @@ df["age3"] = df[["65-69", "70-74", "75-79", "80-84", "over_85"]].sum(axis=1)  # 
 
 # Sanity check.
 math_check = df["combined"] - (df["age1"] + df["age2"] + df["age3"])
-assert (
-    math_check == 0
-).all(), "all regional age-cohort counts did not match the total count"
+assert (math_check == 0).all(), (
+    "all regional age-cohort counts did not match the total count"
+)
 
 # Just what is needed.
 df = df[["combined", "age1", "age2", "age3"]]

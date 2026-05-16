@@ -3,11 +3,11 @@
 
 # Adapted from https://gitlab.com/rhodium/impactlab-rhg/carb-cvm/impact-projections/-/blob/cb6e4abf28adfbb737354b7e585491ec738c29e4/notebooks/calculate_mortality_impacts.ipynb
 
-# %pip install muuttaa==0.1.0
+# %pip install isku==0.3.0
 
 
 import datatree
-from muuttaa import Projector, project
+import isku
 import pandas as pd
 import xarray as xr
 
@@ -110,7 +110,7 @@ valuation_params["pci"] = pci2019
 valuation_params["pop"] = pop["pop"]
 
 
-########################### Do this in muuttaa style.
+########################### Do this in isku style.
 def _no_processing(ds: xr.Dataset) -> xr.Dataset:
     return ds
 
@@ -133,10 +133,10 @@ def _mortality_impact_model(ds: xr.Dataset) -> xr.Dataset:
     return xr.Dataset({"impact": impact, "_effect": _effect})
 
 
-mortality_impact_model = Projector(
-    preprocess=_no_processing,
+mortality_impact_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_mortality_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 
@@ -160,10 +160,10 @@ def _mortality_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     return out
 
 
-mortality_valuation_model = Projector(
-    preprocess=_no_processing,
+mortality_valuation_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_mortality_valuation_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 ########### Running on single dataset
@@ -171,15 +171,14 @@ mortality_valuation_model = Projector(
 test_ds = cmip5["rcp45/ACCESS1-0"].to_dataset()
 test_ds = test_ds.assign_coords(tas_bin=(test_ds["tas_bin"] - 273))
 
-mortality_impacts = project(
-    test_ds, model=mortality_impact_model, parameters=xr.merge([pop, beta])
+mortality_impacts = isku.project(
+    xr.merge([test_ds, pop, beta]), model=mortality_impact_model
 )
 mortality_impacts
 
-damages = project(
-    mortality_impacts,
+damages = isku.project(
+    xr.merge([mortality_impacts, valuation_params]),
     model=mortality_valuation_model,
-    parameters=valuation_params,
 )
 damages = damages.compute()
 
@@ -188,8 +187,6 @@ damages = damages.compute()
 ########### Running on ensemble tree
 
 mortality_impacts = cmip5.map_over_subtree(
-    project,
-    model=mortality_impact_model,
-    parameters=xr.merge([pop, beta]),
+    lambda ds: isku.project(xr.merge([ds, pop, beta]), model=mortality_impact_model),
 )
 mortality_impacts = mortality_impacts.compute()

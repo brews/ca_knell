@@ -16,11 +16,12 @@ def test_auffhammer_dds():
     tasmin_name = "tasmin"
     x_tasmax = np.linspace(start=15.0, stop=30.0, num=n) + 2
     x_tasmin = np.linspace(start=15.0, stop=30.0, num=n)
-    t = xr.cftime_range(
+    t = xr.date_range(
         start=start_time,
         end=end_time,
         freq="D",
         calendar="noleap",
+        use_cftime=True,
     )
     in_ds = xr.Dataset(
         {tasmax_name: (["time"], x_tasmax), tasmin_name: (["time"], x_tasmin)},

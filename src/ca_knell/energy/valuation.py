@@ -2,7 +2,7 @@
 Logic for valuing energy impacts into damages.
 """
 
-from muuttaa import Projector
+import isku
 import pandas as pd
 import xarray as xr
 
@@ -58,8 +58,8 @@ def _energy_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     return damages
 
 
-energy_valuation_model = Projector(
-    preprocess=_no_processing,
+energy_valuation_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_energy_valuation_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )

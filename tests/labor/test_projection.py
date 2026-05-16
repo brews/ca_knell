@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import pytest
 import xarray as xr
@@ -83,7 +83,7 @@ def tasmax():
 
 def test_labor_impact_model(beta, histogram_tasmax):
     """
-    Test that labor_impact_model runs through muuttaa.project with generally correct output.
+    Test that labor_impact_model runs through isku.project with generally correct output.
     """
     expected = xr.Dataset(
         {
@@ -100,10 +100,9 @@ def test_labor_impact_model(beta, histogram_tasmax):
         },
     )
 
-    actual = project(
-        histogram_tasmax,  # Transformed input climate data.
+    actual = isku.project(
+        xr.merge([histogram_tasmax, beta]),  # Transformed input climate data.
         model=labor_impact_model,
-        parameters=beta,
     )
 
     xr.testing.assert_allclose(actual, expected)
@@ -111,7 +110,7 @@ def test_labor_impact_model(beta, histogram_tasmax):
 
 def test_labor_impact_model_gamma_mean(gamma, histogram_tasmax, tasmax):
     """
-    Test that labor_impact_model_gamma runs through muuttaa.project.
+    Test that labor_impact_model_gamma runs through isku.project.
      Checks for generally correct output using mean gamma as input.
     """
     # Build up what we expect output to be.
@@ -134,10 +133,9 @@ def test_labor_impact_model_gamma_mean(gamma, histogram_tasmax, tasmax):
     # Using rename_vars because model expects "gamma" variable, not "gamma_mean".
     params = gamma[["gamma_mean"]].rename_vars({"gamma_mean": "gamma"})
 
-    actual = project(
-        transformed_input,
+    actual = isku.project(
+        xr.merge([transformed_input, params]),
         model=labor_impact_model_gamma,
-        parameters=params,
     )
 
     xr.testing.assert_allclose(actual, expected)
@@ -145,7 +143,7 @@ def test_labor_impact_model_gamma_mean(gamma, histogram_tasmax, tasmax):
 
 def test_labor_impact_model_gamma_sampled(gamma, histogram_tasmax, tasmax):
     """
-    Test that labor_impact_model_gamma runs through muuttaa.project.
+    Test that labor_impact_model_gamma runs through isku.project.
      Checks for generally correct output using sampled gamma as input.
     """
     # Build up what we expect output to be.
@@ -176,10 +174,9 @@ def test_labor_impact_model_gamma_sampled(gamma, histogram_tasmax, tasmax):
     # Using rename_vars because model expects "gamma" variable, not "gamma_sampled".
     params = gamma[["gamma_sampled"]].rename_vars({"gamma_sampled": "gamma"})
 
-    actual = project(
-        transformed_input,
+    actual = isku.project(
+        xr.merge([transformed_input, params]),
         model=labor_impact_model_gamma,
-        parameters=params,
     )
 
     xr.testing.assert_allclose(actual, expected)

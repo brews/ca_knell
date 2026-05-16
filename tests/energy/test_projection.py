@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import pytest
 import xarray as xr
@@ -53,7 +53,7 @@ def dds():
 
 def test_energy_impact_model(beta, dds):
     """
-    Test that energy_impact_model runs through muuttaa.project with generally correct output.
+    Test that energy_impact_model runs through isku.project with generally correct output.
     """
     expected = xr.Dataset(
         {
@@ -67,10 +67,9 @@ def test_energy_impact_model(beta, dds):
         },
     )
 
-    actual = project(
-        dds,  # Transformed input climate data.
+    actual = isku.project(
+        xr.merge([dds, beta]),  # Transformed input climate data.
         model=energy_impact_model,
-        parameters=beta,
     )
 
     xr.testing.assert_allclose(actual, expected)

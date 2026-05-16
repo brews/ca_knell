@@ -2,7 +2,7 @@
 Logic for projecting labor impacts from transformed data.
 """
 
-from muuttaa import Projector
+import isku
 import xarray as xr
 
 
@@ -27,10 +27,10 @@ def _labor_impact_model(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you already have beta.
-labor_impact_model = Projector(
-    preprocess=_no_processing,
+labor_impact_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_labor_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 
@@ -98,8 +98,8 @@ def _beta_from_gamma(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you have gamma and need to compute beta.
-labor_impact_model_gamma = Projector(
-    preprocess=_beta_from_gamma,  # Not sure this should be preprocess but I'm lazy.
+labor_impact_model_gamma = isku.build_projection_template(
+    pre=_beta_from_gamma,  # Not sure this should be preprocess but I'm lazy.
     project=_labor_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )

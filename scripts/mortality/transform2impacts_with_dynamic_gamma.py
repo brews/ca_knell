@@ -1,4 +1,4 @@
-%pip install muuttaa==0.1.0 metacsv
+%pip install isku==0.3.0 metacsv
 
 
 import datetime
@@ -15,10 +15,8 @@ from dask_gateway import GatewayCluster
 import datatree as dt
 import fsspec
 import metacsv
-from muuttaa import SegmentWeights
+import isku
 import numpy as np
-from muuttaa import apply_transformations, project, Projector
-from muuttaa import TransformationStrategy
 import pandas as pd
 import xarray as xr
 from xhistogram.xarray import histogram
@@ -39,7 +37,7 @@ PCI2019_URI = "gs://rhg-data/impactlab-rhg/client-projects/2021-carb-cvm/data-pr
 
 def open_carb_segmentweights(
         url: str | PathLike[Any] | BufferedIOBase,
-) -> SegmentWeights:
+) -> isku.GridWeightingRegions:
     """Open SegmentWeights from CARB project weights file"""
     import pandas as pd
 
@@ -51,7 +49,7 @@ def open_carb_segmentweights(
     sw = sw.to_xarray().rename_vars(
         {"longitude": "lon", "latitude": "lat", "GEOID": "region"}
     )
-    return SegmentWeights(sw)
+    return isku.GridWeightingRegions(sw)
 
 
 def read_csvv(filename):
@@ -175,9 +173,9 @@ def _make_30hbartlett_climtas(ds: xr.Dataset) -> xr.Dataset:
     return da.to_dataset(name="climtas").astype("float32")
 
 
-make_climtas = TransformationStrategy(
-    preprocess=_make_annual_tas,
-    postprocess=_make_30hbartlett_climtas,
+make_climtas = isku.build_extraction_template(
+    pre=_make_annual_tas,
+    post=_make_30hbartlett_climtas,
 )
 
 
@@ -195,9 +193,9 @@ def _make_tas_20yrmean_annual_histogram(ds: xr.Dataset) -> xr.Dataset:
     return tas_histogram_20yr.astype("float32")
 
 
-make_tas_20yrmean_annual_histogram = TransformationStrategy(
-    preprocess=_make_tas_20yrmean_annual_histogram,
-    postprocess=_no_processing,
+make_tas_20yrmean_annual_histogram = isku.build_extraction_template(
+    pre=_make_tas_20yrmean_annual_histogram,
+    post=_no_processing,
 )
 
 # Betas from Gammas #####################################################
@@ -327,10 +325,10 @@ def _mortality_impact_model(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you have gamma and need to compute beta.
-mortality_impact_model_gamma = Projector(
-    preprocess=_beta_from_gamma,
+mortality_impact_model_gamma = isku.build_projection_template(
+    pre=_beta_from_gamma,
     project=_mortality_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 ##########################################################################
@@ -420,14 +418,10 @@ with GatewayCluster(
     print(client.dashboard_link)
     cluster.scale(50)
 
-    transformed = apply_transformations(
-        test_ds,
-        regionalize=segment_weights,
-        strategies=[
-            make_climtas,
-            make_tas_20yrmean_annual_histogram,
-        ],
-    )
+    transformed = xr.merge([
+        isku.extract_regions(test_ds, regions=segment_weights, template=t)
+        for t in [make_climtas, make_tas_20yrmean_annual_histogram]
+    ])
     transformed = transformed.compute()
 
 
@@ -476,10 +470,9 @@ with GatewayCluster(
     # print(out)
     # out = out.compute()
 
-    mortality_impacts = project(
-        transformed.sel(year=slice(1990, 2098)),
+    mortality_impacts = isku.project(
+        xr.merge([transformed.sel(year=slice(1990, 2098)), impact_gamma_params.dropna(dim="region")]),
         model=mortality_impact_model_gamma,
-        parameters=impact_gamma_params.dropna(dim="region"),
     )
     print(mortality_impacts)
     mortality_impacts = mortality_impacts.compute()

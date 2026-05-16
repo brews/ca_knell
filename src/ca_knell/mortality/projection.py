@@ -2,7 +2,7 @@
 Logic for mortality impact and damage projection.
 """
 
-from muuttaa import Projector
+import isku
 import pandas as pd
 import xarray as xr
 
@@ -22,10 +22,10 @@ def _mortality_impact_model(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you already have beta.
-mortality_impact_model = Projector(
-    preprocess=_no_processing,
+mortality_impact_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_mortality_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 
@@ -142,10 +142,10 @@ def _beta_from_gamma(ds: xr.Dataset) -> xr.Dataset:
 
 
 # If you have gamma and need to compute beta.
-mortality_impact_model_gamma = Projector(
-    preprocess=_beta_from_gamma,  # Not sure this should actually be a preprocess but I'm lazy.
+mortality_impact_model_gamma = isku.build_projection_template(
+    pre=_beta_from_gamma,  # Not sure this should actually be a preprocess but I'm lazy.
     project=_mortality_impact_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
 
 
@@ -169,8 +169,8 @@ def _mortality_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     return out
 
 
-mortality_valuation_model = Projector(
-    preprocess=_no_processing,
+mortality_valuation_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_mortality_valuation_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )

@@ -1,4 +1,4 @@
-from muuttaa import project
+import isku
 import numpy as np
 import pytest
 import xarray as xr
@@ -107,7 +107,7 @@ def climtas():
 
 def test_mortality_impact_model(beta, ageshare, histogram_tas):
     """
-    Test that mortality_impact_model runs through muuttaa.project with generally correct output.
+    Test that mortality_impact_model runs through isku.project with generally correct output.
     """
     expected = xr.Dataset(
         {
@@ -124,10 +124,9 @@ def test_mortality_impact_model(beta, ageshare, histogram_tas):
         },
     )
 
-    actual = project(
-        histogram_tas,  # Transformed input climate data.
+    actual = isku.project(
+        xr.merge([histogram_tas, ageshare, beta]),  # Transformed input climate data.
         model=mortality_impact_model,
-        parameters=xr.merge([ageshare, beta]),
     )
 
     xr.testing.assert_allclose(actual, expected)
@@ -137,7 +136,7 @@ def test_mortality_impact_model_gamma_mean(
     gamma, ageshare, loggdppc, histogram_tas, climtas
 ):
     """
-    Test that mortality_impact_model_gamma runs through muuttaa.project.
+    Test that mortality_impact_model_gamma runs through isku.project.
      Checks for generally correct output using mean gamma as input.
     """
     # Build up what we expect output to be.
@@ -166,8 +165,9 @@ def test_mortality_impact_model_gamma_mean(
         ],
     )
 
-    actual = project(
-        transformed_input, model=mortality_impact_model_gamma, parameters=params
+    actual = isku.project(
+        xr.merge([transformed_input, params]),
+        model=mortality_impact_model_gamma,
     )
 
     xr.testing.assert_allclose(actual, expected)
@@ -177,7 +177,7 @@ def test_mortality_impact_model_gamma_sampled(
     gamma, ageshare, loggdppc, histogram_tas, climtas
 ):
     """
-    Test that mortality_impact_model_gamma runs through muuttaa.project.
+    Test that mortality_impact_model_gamma runs through isku.project.
     Checks for generally correct output using sampled gamma as input.
     """
     # Build up what we expect output to be.
@@ -214,8 +214,9 @@ def test_mortality_impact_model_gamma_sampled(
         ],
     )
 
-    actual = project(
-        transformed_input, model=mortality_impact_model_gamma, parameters=params
+    actual = isku.project(
+        xr.merge([transformed_input, params]),
+        model=mortality_impact_model_gamma,
     )
 
     xr.testing.assert_allclose(actual, expected)
@@ -254,7 +255,7 @@ def test_uclip():
 
 def test_mortality_valuation_model():
     """
-    Test mortality_valuation_model can run through muuttaa.project.
+    Test mortality_valuation_model can run through isku.project.
     Does basic check of output.
     """
     expected = xr.Dataset(
@@ -304,6 +305,6 @@ def test_mortality_valuation_model():
         },
     )
 
-    actual = project(impact, model=mortality_valuation_model, parameters=params)
+    actual = isku.project(xr.merge([impact, params]), model=mortality_valuation_model)
 
     xr.testing.assert_allclose(actual, expected)

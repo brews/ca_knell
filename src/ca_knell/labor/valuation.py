@@ -2,7 +2,7 @@
 Logic for valuing labor impacts into damages.
 """
 
-from muuttaa import Projector
+import isku
 import xarray as xr
 
 
@@ -37,8 +37,8 @@ def _labor_valuation_model(ds: xr.Dataset) -> xr.Dataset:
     return out
 
 
-labor_valuation_model = Projector(
-    preprocess=_no_processing,
+labor_valuation_model = isku.build_projection_template(
+    pre=_no_processing,
     project=_labor_valuation_model,
-    postprocess=_no_processing,
+    post=_no_processing,
 )
