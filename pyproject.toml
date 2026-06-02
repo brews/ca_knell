@@ -33,7 +33,7 @@ test = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.14",
-    "ty>=0.0.38",
+    "ty>=0.0.40",
 ]
 dev = [{ include-group = "test" }]
 
