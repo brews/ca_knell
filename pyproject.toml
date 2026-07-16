@@ -23,7 +23,7 @@ dependencies = [
   "numpy",
   "pandas",
   "xhistogram",
-  "xarray>=2026.4.0",
+  "xarray>=2026.7.0",
   "cftime",
   "isku>=0.3.0",
 ]
