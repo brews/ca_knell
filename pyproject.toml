@@ -25,7 +25,7 @@ dependencies = [
   "xhistogram",
   "xarray>=2026.7.0",
   "cftime",
-  "isku>=0.3.0",
+  "isku>=0.4.0",
 ]
 
 [dependency-groups]
